@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ButtonLED", "ButtonLED\Butt
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlinkingLED", "BlinkingLED\BlinkingLED.csproj", "{8A44BD54-5476-4C48-BB0F-E23DCE607A83}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ButtonInput", "ButtonInput\ButtonInput.csproj", "{BF56375A-74EC-48F9-B515-736862F48FAE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|ARM = Debug|ARM
@@ -73,6 +75,24 @@ Global
 		{8A44BD54-5476-4C48-BB0F-E23DCE607A83}.Release|x86.ActiveCfg = Release|x86
 		{8A44BD54-5476-4C48-BB0F-E23DCE607A83}.Release|x86.Build.0 = Release|x86
 		{8A44BD54-5476-4C48-BB0F-E23DCE607A83}.Release|x86.Deploy.0 = Release|x86
+		{BF56375A-74EC-48F9-B515-736862F48FAE}.Debug|ARM.ActiveCfg = Debug|ARM
+		{BF56375A-74EC-48F9-B515-736862F48FAE}.Debug|ARM.Build.0 = Debug|ARM
+		{BF56375A-74EC-48F9-B515-736862F48FAE}.Debug|ARM.Deploy.0 = Debug|ARM
+		{BF56375A-74EC-48F9-B515-736862F48FAE}.Debug|x64.ActiveCfg = Debug|x64
+		{BF56375A-74EC-48F9-B515-736862F48FAE}.Debug|x64.Build.0 = Debug|x64
+		{BF56375A-74EC-48F9-B515-736862F48FAE}.Debug|x64.Deploy.0 = Debug|x64
+		{BF56375A-74EC-48F9-B515-736862F48FAE}.Debug|x86.ActiveCfg = Debug|x86
+		{BF56375A-74EC-48F9-B515-736862F48FAE}.Debug|x86.Build.0 = Debug|x86
+		{BF56375A-74EC-48F9-B515-736862F48FAE}.Debug|x86.Deploy.0 = Debug|x86
+		{BF56375A-74EC-48F9-B515-736862F48FAE}.Release|ARM.ActiveCfg = Release|ARM
+		{BF56375A-74EC-48F9-B515-736862F48FAE}.Release|ARM.Build.0 = Release|ARM
+		{BF56375A-74EC-48F9-B515-736862F48FAE}.Release|ARM.Deploy.0 = Release|ARM
+		{BF56375A-74EC-48F9-B515-736862F48FAE}.Release|x64.ActiveCfg = Release|x64
+		{BF56375A-74EC-48F9-B515-736862F48FAE}.Release|x64.Build.0 = Release|x64
+		{BF56375A-74EC-48F9-B515-736862F48FAE}.Release|x64.Deploy.0 = Release|x64
+		{BF56375A-74EC-48F9-B515-736862F48FAE}.Release|x86.ActiveCfg = Release|x86
+		{BF56375A-74EC-48F9-B515-736862F48FAE}.Release|x86.Build.0 = Release|x86
+		{BF56375A-74EC-48F9-B515-736862F48FAE}.Release|x86.Deploy.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
