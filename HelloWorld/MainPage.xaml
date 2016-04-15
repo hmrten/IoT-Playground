@@ -8,7 +8,32 @@
     mc:Ignorable="d">
 
     <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" RequestedTheme="Dark">
-        <TextBlock x:Name="textBlock" HorizontalAlignment="Left" Margin="432,416,0,0" TextWrapping="Wrap" Text="Hello World" VerticalAlignment="Top" FontSize="200"/>
+        <TextBlock x:Name="textBlock" HorizontalAlignment="Left" Margin="738,64,0,0" TextWrapping="Wrap" Text="Hello World" VerticalAlignment="Top" FontSize="200"/>
+        <Rectangle Fill="#FF0D6A2F" HorizontalAlignment="Left" Height="395" Margin="47,386,0,0" Stroke="Black" VerticalAlignment="Top" Width="275" RenderTransformOrigin="0.448,0.981"/>
+        <Rectangle Fill="#FF0D6A2F" HorizontalAlignment="Left" Height="395" Margin="374,386,0,0" Stroke="Black" VerticalAlignment="Top" Width="275" RenderTransformOrigin="0.448,0.981"/>
+        <Rectangle Fill="#FF0D6A2F" HorizontalAlignment="Left" Height="287" Margin="56,43,0,0" Stroke="Black" VerticalAlignment="Top" Width="593" RenderTransformOrigin="0.448,0.981"/>
+        <Rectangle Fill="#FF0D6A2F" HorizontalAlignment="Left" Height="395" Margin="711,386,0,0" Stroke="Black" VerticalAlignment="Top" Width="275" RenderTransformOrigin="0.448,0.981"/>
+        <Rectangle Fill="#FF0D6A2F" HorizontalAlignment="Left" Height="173" Margin="56,838,0,0" Stroke="Black" VerticalAlignment="Top" Width="930" RenderTransformOrigin="0.448,0.981"/>
+        <Rectangle Fill="#FF0D6A2F" HorizontalAlignment="Left" Height="625" Margin="1047,386,0,0" Stroke="Black" VerticalAlignment="Top" Width="806" RenderTransformOrigin="0.448,0.981"/>
+        <TextBlock x:Name="textBlock1" HorizontalAlignment="Left" Margin="1158,502,0,0" TextWrapping="Wrap" Text="General Feedback" VerticalAlignment="Top" FontSize="150"/>
+        <TextBlock x:Name="textBlock2" HorizontalAlignment="Left" Height="93" Margin="147,798,0,0" TextWrapping="Wrap" Text="Temperature" VerticalAlignment="Top" Width="318" FontSize="50" RenderTransformOrigin="0.038,-0.548" UseLayoutRounding="False" d:LayoutRounding="Auto">
+            <TextBlock.RenderTransform>
+                <CompositeTransform Rotation="-89.946"/>
+            </TextBlock.RenderTransform>
+        </TextBlock>
+        <TextBlock x:Name="textBlock2_Copy" HorizontalAlignment="Left" Height="93" Margin="465,795,0,0" TextWrapping="Wrap" Text="Preassure" VerticalAlignment="Top" Width="318" FontSize="50" RenderTransformOrigin="0.038,-0.548" UseLayoutRounding="False" d:LayoutRounding="Auto">
+            <TextBlock.RenderTransform>
+                <CompositeTransform Rotation="-89.946"/>
+            </TextBlock.RenderTransform>
+        </TextBlock>
+        <TextBlock x:Name="textBlock2_Copy1" HorizontalAlignment="Left" Height="93" Margin="816,789,0,0" TextWrapping="Wrap" Text="Humidity" VerticalAlignment="Top" Width="318" FontSize="50" RenderTransformOrigin="0.038,-0.548" UseLayoutRounding="False" d:LayoutRounding="Auto">
+            <TextBlock.RenderTransform>
+                <CompositeTransform Rotation="-89.946"/>
+            </TextBlock.RenderTransform>
+        </TextBlock>
+        <TextBlock x:Name="textBlock3" HorizontalAlignment="Left" Height="74" Margin="91,889,0,0" TextWrapping="Wrap" Text="STATUS BAR ||||||||||||||||||||||||||||||||||||||||||||||" VerticalAlignment="Top" Width="855" FontSize="50"/>
+        <TextBlock x:Name="textBlock4" HorizontalAlignment="Left" Height="68" Margin="91,151,0,0" TextWrapping="Wrap" Text="Counter" VerticalAlignment="Top" Width="512" FontSize="50"/>
+        <TextBlock x:Name="textBlock5" HorizontalAlignment="Left" Margin="91,64,0,0" TextWrapping="Wrap" Text="Total number of requests (button press): " VerticalAlignment="Top" FontSize="30"/>
 
     </Grid>
 </Page>
