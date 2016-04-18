@@ -28,6 +28,8 @@ using namespace Microsoft::WRL;
 
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
+extern "C" int test();
+
 static uint32_t rnd()
 {
 	static uint32_t seed = 7;
@@ -73,6 +75,9 @@ MainPage::MainPage()
 	imgScreen->Source = screen;
 
 	timer->Start();
+
+	int x = test();
+	ods("test: %d", x);
 }
 
 
