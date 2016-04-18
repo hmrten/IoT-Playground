@@ -29,21 +29,32 @@ namespace SenseHat
     {
         private const byte DeviceAddress = 0x46;
         private I2cDevice device;
+        private I2cConnectionSettings settings;
         private byte[] zeroBytes = new byte[1 + 192];
         private byte[] buf = new byte[1 + 192]; // buf[0] = address, 192 = 8x8 x 3 bytes per pixel
 
         private async void SetupDevice()
         {
-            var aqs = I2cDevice.GetDeviceSelector();
+            var aqs = I2cDevice.GetDeviceSelector("I2C1");
             var infos = await DeviceInformation.FindAllAsync(aqs);
-            var settings = new I2cConnectionSettings(DeviceAddress)
+            settings = new I2cConnectionSettings(DeviceAddress)
             {
-                BusSpeed = I2cBusSpeed.StandardMode
+                BusSpeed = I2cBusSpeed.StandardMode,
+                SharingMode = I2cSharingMode.Shared
             };
-            var task = I2cDevice.FromIdAsync(infos[0].Id, settings).AsTask();
-            task.Wait();
-            device = task.Result;
-            Debug.WriteLine("device: {0}", device.DeviceId);
+
+            var c = await I2cController.GetDefaultAsync();
+
+            device = await I2cDevice.FromIdAsync(infos[0].Id, settings);
+            if (device == null)
+            {
+                Debug.WriteLine("SlaveAddress: {0}", settings.SlaveAddress);
+                device = await I2cDevice.FromIdAsync(infos[0].Id, new I2cConnectionSettings(settings.SlaveAddress)
+                {
+                    BusSpeed = I2cBusSpeed.StandardMode,
+                    SharingMode = I2cSharingMode.Shared
+                });
+            }
         }
 
         private void ClearDisplay()
@@ -59,9 +70,9 @@ namespace SenseHat
             {
                 for (int x = 0; x < 8; ++x)
                 {
-                    byte r = 0;
-                    byte g = 0;
-                    byte b = 50;
+                    byte r = 0; // 5 bits
+                    byte g = 0; // 6 bits
+                    byte b = 31; // 5 bits
 
                     buf[i + 0] = r;
                     buf[i + 8] = g;
@@ -80,12 +91,13 @@ namespace SenseHat
             this.InitializeComponent();
 
             SetupDevice();
+            Debug.WriteLine("device: {0}", device.DeviceId);
 
-            Draw();
+            //Draw();
 
             ClearDisplay();
-            Debug.WriteLine("exiting...");
-            Application.Current.Exit();
+
+            device.Dispose();
         }
     }
 }
