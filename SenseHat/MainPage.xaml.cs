@@ -29,32 +29,27 @@ namespace SenseHat
     {
         private const byte DeviceAddress = 0x46;
         private I2cDevice device;
-        private I2cConnectionSettings settings;
         private byte[] zeroBytes = new byte[1 + 192];
         private byte[] buf = new byte[1 + 192]; // buf[0] = address, 192 = 8x8 x 3 bytes per pixel
 
-        private async void SetupDevice()
+        private static async Task<I2cDevice> GetDevice()
         {
-            var aqs = I2cDevice.GetDeviceSelector("I2C1");
+            var aqs = I2cDevice.GetDeviceSelector();
             var infos = await DeviceInformation.FindAllAsync(aqs);
-            settings = new I2cConnectionSettings(DeviceAddress)
+            var settings = new I2cConnectionSettings(DeviceAddress)
             {
-                BusSpeed = I2cBusSpeed.StandardMode,
-                SharingMode = I2cSharingMode.Shared
+                BusSpeed = I2cBusSpeed.StandardMode
             };
+            return await I2cDevice.FromIdAsync(infos[0].Id, settings);
+        }
 
-            var c = await I2cController.GetDefaultAsync();
-
-            device = await I2cDevice.FromIdAsync(infos[0].Id, settings);
-            if (device == null)
+        private void SetupDisplay()
+        {
+            Task.Run(async () =>
             {
-                Debug.WriteLine("SlaveAddress: {0}", settings.SlaveAddress);
-                device = await I2cDevice.FromIdAsync(infos[0].Id, new I2cConnectionSettings(settings.SlaveAddress)
-                {
-                    BusSpeed = I2cBusSpeed.StandardMode,
-                    SharingMode = I2cSharingMode.Shared
-                });
-            }
+                Debug.WriteLine("getting device...");
+                device = await GetDevice().ConfigureAwait(false);
+            }).Wait();
         }
 
         private void ClearDisplay()
@@ -90,10 +85,18 @@ namespace SenseHat
         {
             this.InitializeComponent();
 
-            SetupDevice();
+            try
+            {
+                SetupDisplay();
+            }
+            catch (Exception e)
+            {
+                Debug.WriteLine(e.Message);
+            }
+
             Debug.WriteLine("device: {0}", device.DeviceId);
 
-            //Draw();
+            Draw();
 
             ClearDisplay();
 
