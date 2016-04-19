@@ -1,9 +1,7 @@
 	AREA my_test, CODE, READONLY
 	EXPORT test
 
-test proc
+test
 	mov r0, #1
-	mov pc, lr
-	endp
-
+	bx lr
 	end

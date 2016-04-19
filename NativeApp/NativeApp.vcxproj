@@ -160,7 +160,7 @@
     <None Include="NativeApp_TemporaryKey.pfx" />
     <CustomBuild Include="Test.asm">
       <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">armasm -32 %(Identity) -o $(IntDir)%(Filename).obj</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">armasm %(Identity) -o $(IntDir)%(Filename).obj</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">$(IntDir)%(Filename).obj</Outputs>
     </CustomBuild>
   </ItemGroup>
