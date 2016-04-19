@@ -258,7 +258,8 @@ namespace SenseHat
         {
             this.InitializeComponent();
 
-            Demo_Temperature();
+            //Demo_Temperature();
+            Demo_LedMatrix();
         }
     }
 }
