@@ -25,6 +25,7 @@ using namespace Windows::UI::Xaml::Media::Imaging;
 using namespace Windows::UI::Xaml::Navigation;
 using namespace Windows::Storage::Streams;
 using namespace Microsoft::WRL;
+using namespace Windows::Devices::I2c;
 
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 

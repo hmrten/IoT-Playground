@@ -221,6 +221,11 @@ namespace SenseHat
             device.Write(buf);
         }
 
+        //public void SetPixel(int x, int y)
+        //{
+        //    y * 24
+        //}
+
         private bool disposed = false;
         public void Dispose()
         {
