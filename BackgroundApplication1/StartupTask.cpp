@@ -12,7 +12,9 @@ using namespace Windows::Devices::Enumeration;
 using namespace Windows::Devices::I2c;
 using namespace concurrency;
 
-static void ods(const wchar_t *fmt, ...)
+#define ods(...) ods_f(__VA_ARGS__)
+
+static void ods_f(const wchar_t *fmt, ...)
 {
 	wchar_t buf[512];
 	va_list ap;
@@ -23,20 +25,20 @@ static void ods(const wchar_t *fmt, ...)
 	va_end(ap);
 }
 
-static auto GetDeviceAsync(int addr, I2cBusSpeed speed = I2cBusSpeed::StandardMode, I2cSharingMode sharing = I2cSharingMode::Exclusive)
+static auto GetDevice(int addr, I2cBusSpeed speed = I2cBusSpeed::StandardMode, I2cSharingMode sharing = I2cSharingMode::Exclusive)
 {
+	auto settings = ref new I2cConnectionSettings(addr);
+	settings->BusSpeed = speed;
+	settings->SharingMode = sharing;
 	auto aqs = I2cDevice::GetDeviceSelector();
-	auto infoTask = create_task(DeviceInformation::FindAllAsync(aqs));
-	auto deviceTask = infoTask.then([](DeviceInformationCollection^ dic) {
-		return dic->GetAt(0)->Id;
-	}).then([=](String ^devId) {
-		ods(L"got devId: %s\n", devId->Data());
-		auto settings = ref new I2cConnectionSettings(addr);
-		settings->BusSpeed = speed;
-		settings->SharingMode = sharing;
-		return create_task(I2cDevice::FromIdAsync(devId, settings)).get();
-	});
-	return deviceTask;
+	auto findAllTask = create_task(DeviceInformation::FindAllAsync(aqs));
+	auto devId = findAllTask.get()->GetAt(0)->Id;
+	ods(L"got devId: %s\n", devId->Data());
+
+	auto getDeviceTask = create_task(I2cDevice::FromIdAsync(devId, settings));
+	auto device = getDeviceTask.get();
+	ods(L"got device: %s\n", device->ToString()->Data());
+	return device;
 }
 
 static void ClearDisplay(I2cDevice^ device)
@@ -51,23 +53,42 @@ static inline uint16_t rgb565(uint8_t r, uint8_t g, uint8_t b)
 }
 
 static const char map[64] = {
-	1, 1, 1, 1, 1, 1, 1, 1,
-	1, 0, 0, 0, 0, 0, 0, 1,
-	1, 0, 0, 0, 0, 0, 0, 1,
-	1, 0, 0, 1, 1, 0, 0, 1,
-	1, 0, 0, 1, 1, 0, 0, 1,
-	1, 0, 0, 0, 0, 0, 0, 1,
-	1, 0, 0, 0, 0, 0, 0, 1,
-	1, 1, 1, 1, 1, 1, 1, 1,
+	0, 0, 1, 1, 1, 1, 0, 0,
+	0, 1, 1, 0, 0, 1, 1, 0,
+	0, 1, 1, 0, 0, 1, 1, 0,
+	0, 1, 1, 0, 0, 1, 1, 0,
+	0, 1, 1, 1, 1, 1, 1, 0,
+	0, 1, 1, 0, 0, 1, 1, 0,
+	0, 1, 1, 0, 0, 1, 1, 0,
+	0, 1, 1, 0, 0, 1, 1, 0,
 };
+
+static void foo()
+{
+	using namespace Windows::System::Threading;
+	using namespace Windows::Foundation;
+
+	ods(L"starting PeriodicTimer...\n");
+
+	TimeSpan period;
+	period.Duration = 10000000 / 2;
+	int ticks = 0;
+	auto tpt = ThreadPoolTimer::CreatePeriodicTimer(ref new TimerElapsedHandler([=](ThreadPoolTimer^ src) mutable {
+		ods(L"tick!\n");
+		if (++ticks == 10)
+			src->Cancel();
+	}), period);
+}
 
 void StartupTask::Run(IBackgroundTaskInstance^ taskInstance)
 {
 	auto deferral = taskInstance->GetDeferral();
 
-	auto device = GetDeviceAsync(0x46).get();
+	foo();
 
-	ods(L"device: %s\n", device->DeviceId);
+	auto device = GetDevice(0x46);
+
+	ods(L"device: %s\n", device->DeviceId->Data());
 	ods(L"writing to led...\n");
 
 	auto data = ref new Array<byte>(1 + 192);
@@ -79,14 +100,17 @@ void StartupTask::Run(IBackgroundTaskInstance^ taskInstance)
 		for (int x = 0; x < 8; ++x)
 		{
 			char m = map[row + x];
-			//char m = 1;
 			byte r, g, b;
 			if (m)
 			{
 				r = 0;
-				g = 0;
-				b = 31;
-			}			else			{				r = g = b = 0;			}
+				g = 15;
+				b = 15;
+			}
+			else
+			{
+				r = g = b = 0;
+			}
 
 			data[i + 0] = r;
 			data[i + 8] = g;
