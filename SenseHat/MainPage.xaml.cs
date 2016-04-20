@@ -164,7 +164,7 @@ namespace SenseHat
             Task.Run(async () =>
             {
                 await GetDevice().ConfigureAwait(false);
-            }).Wait(5000);
+            }).Wait();
             if (device == null)
             {
                 throw new Exception("failed to get device");
@@ -267,8 +267,89 @@ namespace SenseHat
         }
     }
 
+    public class SensorReader
+    {
+        private Queue<Tuple<float, float>> readings;
+        private int capacity;
+        private HTS221 hts221;
+        private DispatcherTimer timer;
+        private Action<SensorReader, float, float> onReading;
+
+        public IEnumerable<Tuple<float, float>> Data
+        {
+            get
+            {
+                return readings;
+            }
+        }
+
+        public IEnumerable<float> TemperatureData
+        {
+            get
+            {
+                return readings.Select(r => r.Item1);
+            }
+        }
+
+        public IEnumerable<float> HumidityData
+        {
+            get
+            {
+                return readings.Select(r => r.Item2);
+            }
+        }
+
+        public SensorReader(int ms, int capacity = 100, Action<SensorReader, float, float> onReading = null)
+        {
+            readings = new Queue<Tuple<float, float>>(capacity);
+            this.capacity = capacity;
+
+            hts221 = new HTS221();
+            hts221.Init();
+
+            timer = new DispatcherTimer();
+            timer.Interval = TimeSpan.FromMilliseconds(ms);
+            timer.Tick += Timer_Tick;
+            timer.Start();
+
+            this.onReading = onReading;
+        }
+
+        public void Start()
+        {
+            timer.Start();
+        }
+
+        public void Stop()
+        {
+            timer.Stop();
+        }
+
+        private void Timer_Tick(object sender, object e)
+        {
+            float c = hts221.ReadTemperature();
+            float h = hts221.ReadHumidity();
+
+            var pair = new Tuple<float, float>(c, h);
+
+            if (readings.Count < capacity)
+            {
+                readings.Enqueue(pair);
+            }
+            else
+            {
+                readings.Dequeue();
+                readings.Enqueue(pair);
+            }
+
+            onReading?.Invoke(this, c, h);
+        }
+    }
+
     public sealed partial class MainPage : Page
     {
+        private SensorReader sensorReader;
+
         private void Demo_LedMatrix()
         {
             using (var led = new LedMatrix())
@@ -294,8 +375,14 @@ namespace SenseHat
         {
             this.InitializeComponent();
 
-            Demo_HTS221();
-            Demo_LedMatrix();
+            sensorReader = new SensorReader(100, 10, (sr, c, h) =>
+            {
+                Debug.WriteLine("reading: <{0}, {1}>", c, h);
+                listBox.ItemsSource = sr.Data.Select(x => String.Format("Temp: {0:F2} C, Humidity: {1:F2} %", x.Item1, x.Item2));
+            });
+
+            //Demo_HTS221();
+            //Demo_LedMatrix();
         }
     }
 }
