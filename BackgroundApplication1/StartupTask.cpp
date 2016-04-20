@@ -72,48 +72,48 @@ static void Draw(I2cDevice^ device, int ticks)
 	static int xp;
 
 	auto data = ref new Array<byte>(1 + 192);
+
 	auto s0 = sinf((float)ticks*1.1234f) + 1.0f;
 	auto s1 = sinf((float)ticks*0.9876f) + 1.0f;
 	auto s2 = sinf((float)ticks*1.3780f) + 1.0f;
-	//data[0] = 0x00;
 
-
-
-	//switch (dir)
-	//{
-	//case 0: ++xp; break;
-	//case 1: --xp; break;
-	//case 2: ++yp; break;
-	//case 3: --yp; break;
-	//}
-
-	if (dir == 0)
-	{
-		if (xp == 7)
+	switch (dir) {
+	case 0:
+	C0:
+		if (xp == 7) {
 			dir = 2;
-		else
+			goto C2;
+		} else {
 			++xp;
-	}
-	else if (dir == 2)
-	{
-		if (yp == 7)
-			dir = 1;
-		else
-			++yp;
-	}
-	else if (dir == 1)
-	{
-		if (xp == 0)
+		}
+		break;
+	case 1:
+	C1:
+		if (xp == 0) {
 			dir = 3;
-		else
+			goto C3;
+		} else {
 			--xp;
-	}
-	else if (dir == 3)
-	{
-		if (yp == 0)
+		}
+		break;
+	case 2:
+	C2:
+		if (yp == 7) {
+			dir = 1;
+			goto C1;
+		} else {
+			++yp;
+		}
+		break;
+	case 3:
+	C3:
+		if (yp == 0) {
 			dir = 0;
-		else
+			goto C0;
+		} else {
 			--yp;
+		}
+		break;
 	}
 
 	int idx = 1 + (yp * 24 + xp);
@@ -133,32 +133,6 @@ static void Draw(I2cDevice^ device, int ticks)
 	data[idx + 8] = g;
 	data[idx + 16] = b;
 
-	//for (int y = 0; y < 8; ++y)
-	//{
-	//	int row = y << 3;
-	//	for (int x = 0; x < 8; ++x)
-	//	{
-	//		byte r, g, b;
-
-	//		if ((ticks & 7) == x)
-	//		{
-	//			r = f;
-	//			g = 0;
-	//			b = f;
-	//		}
-	//		else
-	//		{
-	//			r = g = b = 0;
-	//		}
-
-	//		data[i + 0] = r;
-	//		data[i + 8] = g;
-	//		data[i + 16] = b;
-
-	//		++i;
-	//	}
-	//	i += 16;
-	//}
 	device->Write(data);
 }
 
@@ -177,8 +151,7 @@ static void foo(HANDLE timerDone, I2cDevice^ device)
 
 		Draw(device, ticks);
 
-		if (++ticks == 1000)
-		{
+		if (++ticks == 1000) {
 			SetEvent(timerDone);
 			src->Cancel();
 		}
@@ -199,21 +172,16 @@ void StartupTask::Run(IBackgroundTaskInstance^ taskInstance)
 	auto data = ref new Array<byte>(1 + 192);
 	data[0] = 0x00;
 	int i = 1;
-	for (int y = 0; y < 8; ++y)
-	{
+	for (int y = 0; y < 8; ++y) {
 		int row = y << 3;
-		for (int x = 0; x < 8; ++x)
-		{
+		for (int x = 0; x < 8; ++x) {
 			char m = map[row + x];
 			byte r, g, b;
-			if (m)
-			{
+			if (m) {
 				r = 0;
 				g = 63;
 				b = 0;
-			}
-			else
-			{
+			} else {
 				r = g = b = 0;
 			}
 
