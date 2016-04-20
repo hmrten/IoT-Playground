@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdint.h>
+#include <Windows.h>
+#include <math.h>
 
 using namespace BackgroundApplication1;
 
@@ -63,7 +65,30 @@ static const char map[64] = {
 	0, 1, 1, 0, 0, 1, 1, 0,
 };
 
-static void foo()
+static void Draw(I2cDevice^ device, int ticks)
+{
+	auto data = ref new Array<byte>(1 + 192);
+	auto f = (int)(15.5f*(sinf((float)ticks)+1.0));
+	data[0] = 0x00;
+	int i = 1;
+	for (int y = 0; y < 8; ++y)
+	{
+		for (int x = 0; x < 8; ++x)
+		{
+			byte r = f;
+			byte g = 0;
+			byte b = 0;
+			data[i + 0] = r;
+			data[i + 8] = g;
+			data[i + 16] = b;
+			++i;
+		}
+		i += 16;
+	}
+	device->Write(data);
+}
+
+static void foo(HANDLE timerDone, I2cDevice^ device)
 {
 	using namespace Windows::System::Threading;
 	using namespace Windows::Foundation;
@@ -71,22 +96,28 @@ static void foo()
 	ods(L"starting PeriodicTimer...\n");
 
 	TimeSpan period;
-	period.Duration = 10000000 / 2;
+	period.Duration = 10000000 / 4;
 	int ticks = 0;
 	auto tpt = ThreadPoolTimer::CreatePeriodicTimer(ref new TimerElapsedHandler([=](ThreadPoolTimer^ src) mutable {
 		ods(L"tick!\n");
-		if (++ticks == 10)
+
+		Draw(device, ticks);
+
+		if (++ticks == 100)
+		{
+			SetEvent(timerDone);
 			src->Cancel();
+		}
 	}), period);
 }
 
 void StartupTask::Run(IBackgroundTaskInstance^ taskInstance)
 {
-	auto deferral = taskInstance->GetDeferral();
-
-	foo();
+	HANDLE timerDone = CreateEventEx(nullptr, nullptr, 0, SYNCHRONIZE|EVENT_MODIFY_STATE);
 
 	auto device = GetDevice(0x46);
+
+	foo(timerDone, device);
 
 	ods(L"device: %s\n", device->DeviceId->Data());
 	ods(L"writing to led...\n");
@@ -104,8 +135,8 @@ void StartupTask::Run(IBackgroundTaskInstance^ taskInstance)
 			if (m)
 			{
 				r = 0;
-				g = 15;
-				b = 15;
+				g = 63;
+				b = 0;
 			}
 			else
 			{
@@ -123,7 +154,9 @@ void StartupTask::Run(IBackgroundTaskInstance^ taskInstance)
 	device->Write(data);
 	ods(L"done...\n");
 
+	WaitForSingleObjectEx(timerDone, INFINITE, false);
+
 	ClearDisplay(device);
 
-	deferral->Complete();
+	//deferral->Complete();
 }
