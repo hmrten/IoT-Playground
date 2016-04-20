@@ -67,24 +67,98 @@ static const char map[64] = {
 
 static void Draw(I2cDevice^ device, int ticks)
 {
+	static int dir;
+	static int yp;
+	static int xp;
+
 	auto data = ref new Array<byte>(1 + 192);
-	auto f = (int)(15.5f*(sinf((float)ticks)+1.0));
-	data[0] = 0x00;
-	int i = 1;
-	for (int y = 0; y < 8; ++y)
+	auto s0 = sinf((float)ticks*1.1234f) + 1.0f;
+	auto s1 = sinf((float)ticks*0.9876f) + 1.0f;
+	auto s2 = sinf((float)ticks*1.3780f) + 1.0f;
+	//data[0] = 0x00;
+
+
+
+	//switch (dir)
+	//{
+	//case 0: ++xp; break;
+	//case 1: --xp; break;
+	//case 2: ++yp; break;
+	//case 3: --yp; break;
+	//}
+
+	if (dir == 0)
 	{
-		for (int x = 0; x < 8; ++x)
-		{
-			byte r = f;
-			byte g = 0;
-			byte b = 0;
-			data[i + 0] = r;
-			data[i + 8] = g;
-			data[i + 16] = b;
-			++i;
-		}
-		i += 16;
+		if (xp == 7)
+			dir = 2;
+		else
+			++xp;
 	}
+	else if (dir == 2)
+	{
+		if (yp == 7)
+			dir = 1;
+		else
+			++yp;
+	}
+	else if (dir == 1)
+	{
+		if (xp == 0)
+			dir = 3;
+		else
+			--xp;
+	}
+	else if (dir == 3)
+	{
+		if (yp == 0)
+			dir = 0;
+		else
+			--yp;
+	}
+
+	int idx = 1 + (yp * 24 + xp);
+
+	//if (++xp == 8)
+	//{
+	//	xp = 0;
+	//	if (++yp == 8)
+	//		yp = 0;
+	//}
+
+	byte r = (byte)(s0*15.5f);
+	byte g = (byte)(s1*31.5f);
+	byte b = (byte)(s2*15.5f);
+
+	data[idx + 0] = r;
+	data[idx + 8] = g;
+	data[idx + 16] = b;
+
+	//for (int y = 0; y < 8; ++y)
+	//{
+	//	int row = y << 3;
+	//	for (int x = 0; x < 8; ++x)
+	//	{
+	//		byte r, g, b;
+
+	//		if ((ticks & 7) == x)
+	//		{
+	//			r = f;
+	//			g = 0;
+	//			b = f;
+	//		}
+	//		else
+	//		{
+	//			r = g = b = 0;
+	//		}
+
+	//		data[i + 0] = r;
+	//		data[i + 8] = g;
+	//		data[i + 16] = b;
+
+	//		++i;
+	//	}
+	//	i += 16;
+	//}
 	device->Write(data);
 }
 
@@ -96,14 +170,14 @@ static void foo(HANDLE timerDone, I2cDevice^ device)
 	ods(L"starting PeriodicTimer...\n");
 
 	TimeSpan period;
-	period.Duration = 10000000 / 4;
+	period.Duration = 10000000 / 16;
 	int ticks = 0;
 	auto tpt = ThreadPoolTimer::CreatePeriodicTimer(ref new TimerElapsedHandler([=](ThreadPoolTimer^ src) mutable {
-		ods(L"tick!\n");
+		ods(L"tick: %d\n", ticks);
 
 		Draw(device, ticks);
 
-		if (++ticks == 100)
+		if (++ticks == 1000)
 		{
 			SetEvent(timerDone);
 			src->Cancel();
@@ -113,7 +187,7 @@ static void foo(HANDLE timerDone, I2cDevice^ device)
 
 void StartupTask::Run(IBackgroundTaskInstance^ taskInstance)
 {
-	HANDLE timerDone = CreateEventEx(nullptr, nullptr, 0, SYNCHRONIZE|EVENT_MODIFY_STATE);
+	HANDLE timerDone = CreateEventEx(nullptr, nullptr, 0, SYNCHRONIZE | EVENT_MODIFY_STATE);
 
 	auto device = GetDevice(0x46);
 
