@@ -9,6 +9,7 @@
 
     <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
         <ListBox x:Name="listBox" HorizontalAlignment="Left" Height="470" Margin="10,10,0,0" VerticalAlignment="Top" Width="287"/>
+        <TextBlock x:Name="textBlock" HorizontalAlignment="Left" Height="67" Margin="332,191,0,0" TextWrapping="Wrap" Text="Hits: 0" VerticalAlignment="Top" Width="419" FontSize="48" Foreground="#FF0023FF"/>
 
     </Grid>
 </Page>

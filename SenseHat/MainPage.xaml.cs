@@ -10,6 +10,8 @@ using Windows.Devices.Gpio;
 using Windows.Devices.I2c;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
+using Windows.System;
+using Windows.UI.Core;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Controls.Primitives;
@@ -291,6 +293,40 @@ namespace SenseHat
         }
     }
 
+    public class PushButton : IDisposable
+    {
+        private GpioController gpio;
+        private GpioPin pin;
+        private int hits;
+        private Action<int> hitAction;
+
+        public PushButton(int pinNr, Action<int> hitAction)
+        {
+            this.hitAction = hitAction;
+            gpio = GpioController.GetDefault();
+            pin = gpio.OpenPin(pinNr);
+            pin.SetDriveMode(GpioPinDriveMode.InputPullUp);
+            pin.DebounceTimeout = TimeSpan.FromMilliseconds(1);
+            pin.ValueChanged += Pin_ValueChanged;
+        }
+
+        private void Pin_ValueChanged(GpioPin sender, GpioPinValueChangedEventArgs args)
+        {
+            if (args.Edge.CompareTo(GpioPinEdge.FallingEdge) == 0)
+                hitAction(++hits);
+        }
+
+        private bool disposed = false;
+        public void Dispose()
+        {
+            if (!disposed)
+            {
+                pin.Dispose();
+                disposed = true;
+            }
+        }
+    }
+
     public class LedMatrix : IDisposable
     {
         private const byte C_Addr = 0x46;
@@ -351,7 +387,7 @@ namespace SenseHat
         }
     }
 
-    public class SensorReader
+    public class SensorReader : IDisposable
     {
         private Queue<Tuple<float, float, float>> readings;
         private int capacity;
@@ -414,11 +450,25 @@ namespace SenseHat
 
             onReading?.Invoke(this, c, h, p);
         }
+
+        private bool disposed = false;
+        public void Dispose()
+        {
+            if (!disposed)
+            {
+                hts221.Dispose();
+                lps25h.Dispose();
+                disposed = true;
+            }
+        }
     }
 
     public sealed partial class MainPage : Page
     {
         private SensorReader sensorReader;
+        //private JoystickReader joystick = new JoystickReader();
+        private PushButton pushBtn;
+        private int hits;
 
         private void Demo_LedMatrix()
         {
@@ -441,16 +491,32 @@ namespace SenseHat
             }
         }
 
-        public MainPage()
+        private void Demo_Sensors()
         {
-            this.InitializeComponent();
-
             sensorReader = new SensorReader(100, 10, (sr, c, h, p) =>
             {
                 Debug.WriteLine("reading: <{0}, {1}, {2}>", c, h, p);
                 listBox.ItemsSource = sr.Data.Select(x => String.Format("{0:F2} C, {1:F2} %, {2:F2} hPa", x.Item1, x.Item2, x.Item3));
             });
+        }
 
+        private void Demo_PushBUtton()
+        {
+            pushBtn = new PushButton(26, async (hits) =>
+            {
+                await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+                {
+                    textBlock.Text = "Hits: " + hits;
+                });
+            });
+        }
+
+        public MainPage()
+        {
+            this.InitializeComponent();
+
+            Demo_PushBUtton();
+            //Demo_Sensors();
             //Demo_HTS221();
             //Demo_LedMatrix();
         }
