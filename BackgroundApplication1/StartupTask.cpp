@@ -136,7 +136,7 @@ static void Draw(I2cDevice^ device, int ticks)
 	device->Write(data);
 }
 
-static void foo(HANDLE timerDone, I2cDevice^ device)
+static void StartDemo(HANDLE timerDone, I2cDevice^ device)
 {
 	using namespace Windows::System::Threading;
 	using namespace Windows::Foundation;
@@ -164,7 +164,7 @@ void StartupTask::Run(IBackgroundTaskInstance^ taskInstance)
 
 	auto device = GetDevice(0x46);
 
-	foo(timerDone, device);
+	StartDemo(timerDone, device);
 
 	ods(L"device: %s\n", device->DeviceId->Data());
 	ods(L"writing to led...\n");
