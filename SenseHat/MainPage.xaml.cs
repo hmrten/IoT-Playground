@@ -468,7 +468,6 @@ namespace SenseHat
         private SensorReader sensorReader;
         //private JoystickReader joystick = new JoystickReader();
         private PushButton pushBtn;
-        private int hits;
 
         private void Demo_LedMatrix()
         {
