@@ -200,7 +200,6 @@ namespace SenseHat
 
         private I2cDevice device;
         private byte[] zeroBytes = new byte[1 + 192];
-        private byte[] buf = new byte[1 + 192]; // buf[0] = address, 192 = 8x8 x 3 bytes per pixel
 
         private static async Task<I2cDevice> GetDevice()
         {
@@ -229,6 +228,7 @@ namespace SenseHat
 
         public void Draw()
         {
+            byte[] buf = new byte[1 + 192]; // buf[0] = address, 192 = 8x8 x 3 bytes per pixel
             buf[0] = 0x00;
             int i = 1;
             for (int y = 0; y < 8; ++y)
