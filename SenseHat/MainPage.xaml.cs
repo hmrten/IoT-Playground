@@ -52,7 +52,8 @@ namespace SenseHat
         public const byte C_T1Out = 0x3E;
 
         private I2cDevice device;
-        private Func<Int16, float> convertReading;
+        private Func<Int16, float> convertTemperature;
+        private Func<Int16, float> convertHumidity;
 
         private byte Read8(byte addr, string msg)
         {
@@ -95,27 +96,43 @@ namespace SenseHat
             device = await I2cDevice.FromIdAsync(infos[0].Id, settings);
         }
 
-        private Func<Int16, float> GetConverter()
+        private Func<Int16, float> GetTemperatureConverter()
         {
             byte rawMsb = Read8(C_T1T0 + 0x80, "failed to read T1T0");
 
             byte t0Lsb = Read8(C_T0C8 + 0x80, "failed to read T0C8");
-            UInt16 t0c8 = (UInt16)(((UInt16)(rawMsb & 0x03) << 8) | (UInt16)t0Lsb);
-            float t0 = t0c8 / 8.0f;
-
             byte t1Lsb = Read8(C_T1C8 + 0x80, "failed to read T1C8");
+
+            UInt16 t0c8 = (UInt16)(((UInt16)(rawMsb & 0x03) << 8) | (UInt16)t0Lsb);
             UInt16 t1c8 = (UInt16)(((UInt16)(rawMsb & 0x0C) << 6) | (UInt16)t1Lsb);
+
+            float t0 = t0c8 / 8.0f;
             float t1 = t1c8 / 8.0f;
 
             Int16 t0out = (Int16)Read16LE(C_T0Out + 0x80, "failed to read T0Out");
             Int16 t1out = (Int16)Read16LE(C_T1Out + 0x80, "failed to read T1Out");
 
-            // calibration slope
             float m = (t1 - t0) / (t1out - t0out);
-            // y intercept
-            float k = t0 - (m * t0out);
+            float b = t0 - (m * t0out);
 
-            return t => t * m + k;
+            return t => t * m + b;
+        }
+
+        private Func<Int16, float> GetHumidityConverter()
+        {
+            byte h0h2 = Read8(C_H0H2 + 0x80, "failed to read H0H2");
+            byte h1h2 = Read8(C_H1H2 + 0x80, "failed to read H1H2");
+
+            float h0 = h0h2 * 0.5f;
+            float h1 = h1h2 * 0.5f;
+
+            Int16 h0t0out = (Int16)Read16LE(C_H0T0Out + 0x80, "failed to read H0T0Out");
+            Int16 h1t0out = (Int16)Read16LE(C_H1T0Out + 0x80, "failed to read H1T0Out");
+
+            float m = (h1 - h0) / (h0t0out - h1t0out);
+            float b = h0 - (m * h0t0out);
+
+            return t => t * m + b;
         }
 
         public float ReadTemperature()
@@ -124,7 +141,19 @@ namespace SenseHat
             if ((status & 1) == 1)
             {
                 var rawData = (Int16)Read16LE(C_TempOutL + 0x80, "failed to read TempOutL");
-                var t = convertReading(rawData);
+                var t = convertTemperature(rawData);
+                return t;
+            }
+            return 0.0f;
+        }
+
+        public float ReadHumidity()
+        {
+            var status = Read8(C_Status, "failed to read Status");
+            if ((status & 2) == 2)
+            {
+                var rawData = (Int16)Read16LE(C_HumidityOutL + 0x80, "failed to read HumidityOutL");
+                var t = convertHumidity(rawData);
                 return t;
             }
             return 0.0f;
@@ -135,7 +164,7 @@ namespace SenseHat
             Task.Run(async () =>
             {
                 await GetDevice().ConfigureAwait(false);
-            }).Wait(5000);
+            }).Wait();
             if (device == null)
             {
                 throw new Exception("failed to get device");
@@ -150,7 +179,8 @@ namespace SenseHat
             data[1] = 0x1B;
             device.Write(data);
 
-            convertReading = GetConverter();
+            convertTemperature = GetTemperatureConverter();
+            convertHumidity = GetHumidityConverter();
         }
 
         private bool disposed = false;
@@ -170,7 +200,6 @@ namespace SenseHat
 
         private I2cDevice device;
         private byte[] zeroBytes = new byte[1 + 192];
-        private byte[] buf = new byte[1 + 192]; // buf[0] = address, 192 = 8x8 x 3 bytes per pixel
 
         private static async Task<I2cDevice> GetDevice()
         {
@@ -199,6 +228,7 @@ namespace SenseHat
 
         public void Draw()
         {
+            byte[] buf = new byte[1 + 192]; // buf[0] = address, 192 = 8x8 x 3 bytes per pixel
             buf[0] = 0x00;
             int i = 1;
             for (int y = 0; y < 8; ++y)
@@ -221,6 +251,11 @@ namespace SenseHat
             device.Write(buf);
         }
 
+        //public void SetPixel(int x, int y)
+        //{
+        //    y * 24
+        //}
+
         private bool disposed = false;
         public void Dispose()
         {
@@ -232,8 +267,89 @@ namespace SenseHat
         }
     }
 
+    public class SensorReader
+    {
+        private Queue<Tuple<float, float>> readings;
+        private int capacity;
+        private HTS221 hts221;
+        private DispatcherTimer timer;
+        private Action<SensorReader, float, float> onReading;
+
+        public IEnumerable<Tuple<float, float>> Data
+        {
+            get
+            {
+                return readings;
+            }
+        }
+
+        public IEnumerable<float> TemperatureData
+        {
+            get
+            {
+                return readings.Select(r => r.Item1);
+            }
+        }
+
+        public IEnumerable<float> HumidityData
+        {
+            get
+            {
+                return readings.Select(r => r.Item2);
+            }
+        }
+
+        public SensorReader(int ms, int capacity = 100, Action<SensorReader, float, float> onReading = null)
+        {
+            readings = new Queue<Tuple<float, float>>(capacity);
+            this.capacity = capacity;
+
+            hts221 = new HTS221();
+            hts221.Init();
+
+            timer = new DispatcherTimer();
+            timer.Interval = TimeSpan.FromMilliseconds(ms);
+            timer.Tick += Timer_Tick;
+            timer.Start();
+
+            this.onReading = onReading;
+        }
+
+        public void Start()
+        {
+            timer.Start();
+        }
+
+        public void Stop()
+        {
+            timer.Stop();
+        }
+
+        private void Timer_Tick(object sender, object e)
+        {
+            float c = hts221.ReadTemperature();
+            float h = hts221.ReadHumidity();
+
+            var pair = new Tuple<float, float>(c, h);
+
+            if (readings.Count < capacity)
+            {
+                readings.Enqueue(pair);
+            }
+            else
+            {
+                readings.Dequeue();
+                readings.Enqueue(pair);
+            }
+
+            onReading?.Invoke(this, c, h);
+        }
+    }
+
     public sealed partial class MainPage : Page
     {
+        private SensorReader sensorReader;
+
         private void Demo_LedMatrix()
         {
             using (var led = new LedMatrix())
@@ -244,13 +360,14 @@ namespace SenseHat
             }
         }
 
-        private void Demo_Temperature()
+        private void Demo_HTS221()
         {
             using (var hts221 = new HTS221())
             {
                 hts221.Init();
                 float c = hts221.ReadTemperature();
-                Debug.WriteLine(c);
+                float h = hts221.ReadHumidity();
+                Debug.WriteLine("temp: {0} celcius\nhumidity: {1} %", c, h);
             }
         }
 
@@ -258,8 +375,14 @@ namespace SenseHat
         {
             this.InitializeComponent();
 
-            //Demo_Temperature();
-            Demo_LedMatrix();
+            sensorReader = new SensorReader(100, 10, (sr, c, h) =>
+            {
+                Debug.WriteLine("reading: <{0}, {1}>", c, h);
+                listBox.ItemsSource = sr.Data.Select(x => String.Format("Temp: {0:F2} C, Humidity: {1:F2} %", x.Item1, x.Item2));
+            });
+
+            //Demo_HTS221();
+            //Demo_LedMatrix();
         }
     }
 }
