@@ -8,7 +8,7 @@
     mc:Ignorable="d">
 
     <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" RequestedTheme="Dark">
-        <Grid HorizontalAlignment="Left" Height="398" Margin="187,38,0,0" VerticalAlignment="Top" Width="398">
+        <Grid HorizontalAlignment="Left" Height="398" Margin="29,39,0,0" VerticalAlignment="Top" Width="398">
             <Button x:Name="btn00" Content="Button" HorizontalAlignment="Left" Height="48" VerticalAlignment="Top" Width="48"/>
             <Button x:Name="btn01" Content="Button" HorizontalAlignment="Left" Height="48" Margin="50,0,0,0" VerticalAlignment="Top" Width="48"/>
             <Button x:Name="btn02" Content="Button" HorizontalAlignment="Left" Height="48" Margin="100,0,0,0" VerticalAlignment="Top" Width="48"/>
@@ -80,6 +80,11 @@
             <Button x:Name="btn75" Content="Button" HorizontalAlignment="Left" Height="48" Margin="250,350,0,0" VerticalAlignment="Top" Width="48"/>
             <Button x:Name="btn76" Content="Button" HorizontalAlignment="Left" Height="48" Margin="300,350,0,0" VerticalAlignment="Top" Width="48"/>
             <Button x:Name="btn77" Content="Button" HorizontalAlignment="Left" Height="48" Margin="350,350,0,0" VerticalAlignment="Top" Width="48"/>
+        </Grid>
+        <Grid HorizontalAlignment="Left" Height="148" Margin="476,124,0,0" VerticalAlignment="Top" Width="192">
+            <Slider x:Name="sliderRed" HorizontalAlignment="Left" Height="48" Margin="0,0,0,0" VerticalAlignment="Top" Width="192" Maximum="31" LargeChange="4"/>
+            <Slider x:Name="sliderGreen" HorizontalAlignment="Left" Height="48" Margin="0,50,0,0" VerticalAlignment="Top" Width="192" Maximum="63" LargeChange="4"/>
+            <Slider x:Name="sliderBlue" HorizontalAlignment="Left" Height="48" Margin="0,100,0,0" VerticalAlignment="Top" Width="192" Maximum="31" LargeChange="4"/>
         </Grid>
     </Grid>
 </Page>

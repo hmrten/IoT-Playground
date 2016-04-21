@@ -38,18 +38,25 @@ namespace LedEditor
 
         public void Init()
         {
-            Task.Run(async () =>
+            try
             {
-                device = await GetDeviceAsync().ConfigureAwait(false);
-            }).Wait(5000);
-            if (device == null)
-            {
-                throw new Exception("failed to get device");
+                Task.Run(async () =>
+                {
+                    device = await GetDeviceAsync().ConfigureAwait(false);
+                }).Wait(5000);
             }
+            catch (Exception e)
+            {
+
+            }
+            //if (device == null)
+            //{
+            //    throw new Exception("failed to get device");
+            //}
 
             // Clear display
             var data = new byte[1 + 192];
-            device.Write(data);
+            device?.Write(data);
         }
 
         public void SetPixel(int x, int y, byte val = 15)
@@ -62,7 +69,7 @@ namespace LedEditor
 
         public void Flush()
         {
-            device.Write(buffer);
+            device?.Write(buffer);
         }
     }
 
