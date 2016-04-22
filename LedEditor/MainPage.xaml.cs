@@ -15,6 +15,7 @@ using Windows.UI.Xaml.Data;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
+using Windows.UI.Xaml.Shapes;
 
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
@@ -59,12 +60,12 @@ namespace LedEditor
             device?.Write(data);
         }
 
-        public void SetPixel(int x, int y, byte val = 15)
+        public void SetPixel(int x, int y, byte r, byte g, byte b)
         {
             int i = 1 + y * 24 + x;
-            buffer[i + 0] = val;
-            buffer[i + 8] = val;
-            buffer[i + 16] = val;
+            buffer[i + 0] = r;
+            buffer[i + 8] = g;
+            buffer[i + 16] = b;
         }
 
         public void Flush()
@@ -79,6 +80,7 @@ namespace LedEditor
         private bool[] ledStatus = new bool[8 * 8];
         private Brush defBrush;
         private Brush greenBrush;
+        private byte r5 = 31, g6 = 63, b5 = 31;
 
         private void InitButtons()
         {
@@ -115,18 +117,48 @@ namespace LedEditor
 
             if (!ledStatus[i])
             {
-                ledMatrix.SetPixel(x, y);
+                ledMatrix.SetPixel(x, y, r5, g6, b5);
                 ledStatus[i] = true;
                 btn.Background = greenBrush;
             }
             else
             {
-                ledMatrix.SetPixel(x, y, 0);
+                ledMatrix.SetPixel(x, y, 0, 0, 0);
                 ledStatus[i] = false;
                 btn.Background = defBrush;
             }
             
             ledMatrix.Flush();
+        }
+
+        private void UpdateColorPreview()
+        {
+            var colorPreview = FindName("colorPreview") as Rectangle;
+            if (colorPreview != null)
+            {
+                byte r = (byte)((r5 * 255) >> 5);
+                byte g = (byte)((g6 * 255) >> 6);
+                byte b = (byte)((b5 * 255) >> 5);
+                colorPreview.Fill = new SolidColorBrush(new Windows.UI.Color { R = r, G = g, B = b, A = 255 });
+            }
+        }
+
+        private void sliderRed_ValueChanged(object sender, RangeBaseValueChangedEventArgs e)
+        {
+            r5 = (byte)e.NewValue;
+            UpdateColorPreview();
+        }
+
+        private void sliderGreen_ValueChanged(object sender, RangeBaseValueChangedEventArgs e)
+        {
+            g6 = (byte)e.NewValue;
+            UpdateColorPreview();
+        }
+
+        private void sliderBlue_ValueChanged(object sender, RangeBaseValueChangedEventArgs e)
+        {
+            b5 = (byte)e.NewValue;
+            UpdateColorPreview();
         }
     }
 }
