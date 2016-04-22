@@ -76,9 +76,10 @@ MainPage::MainPage()
 	imgScreen->Source = screen;
 
 	timer->Start();
-
+#if 0
 	int x = test();
 	ods("test: %d", x);
+#endif
 }
 
 
